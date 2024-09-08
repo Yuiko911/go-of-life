@@ -1,6 +1,9 @@
 # Go of Life 🦠
 Conway's Game of Life, written in Go using ncurses.
 
+## Dependencies
+[rthornton128/goncurses](https://github.com/rthornton128/goncurses)
+
 ## Build and run
 ```sh
 go build -o gooflife *.go
