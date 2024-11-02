@@ -1,6 +1,8 @@
 # Go of Life 🦠
 Conway's Game of Life, written in Go using ncurses.
 
+![alt test](readme/resized.gif)
+
 ## Dependencies
 [rthornton128/goncurses](https://github.com/rthornton128/goncurses)
 
