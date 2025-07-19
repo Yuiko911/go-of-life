@@ -28,6 +28,7 @@ func main() {
 
 	flag.BoolVar(&fs.Paused, "p", false, "Start with the simulation paused.")
 	flag.BoolVar(&fs.Monochrome, "m", false, "Start in monochrome mode.")
+	flag.BoolVar(&fs.LightMode, "l", false, "Enable light mode.")
 
 	flagSpeed := flag.Int64("i", 50, "Initial speed of the simulation.")
 
@@ -120,17 +121,26 @@ func SetColors(fs FieldStatus) {
 			gc.InitPair(i, -1, gc.C_WHITE)
 		}
 
+	} else if fs.LightMode {
+		gc.InitPair(1, -1, -1)
+		gc.InitPair(2, gc.C_BLACK, gc.C_WHITE)
+		gc.InitPair(3, gc.C_BLACK, gc.C_BLACK)
+		gc.InitPair(4, gc.C_BLACK, gc.C_CYAN)
+		gc.InitPair(5, gc.C_WHITE, gc.C_BLUE)
+		gc.InitPair(6, gc.C_BLACK, gc.C_GREEN)
+		gc.InitPair(7, gc.C_BLACK, gc.C_YELLOW)
+		gc.InitPair(8, gc.C_BLACK, gc.C_MAGENTA)
+		gc.InitPair(9, gc.C_BLACK, gc.C_RED)
 	} else {
 		gc.InitPair(1, -1, -1)
 		gc.InitPair(2, gc.C_WHITE, gc.C_BLACK)
 		gc.InitPair(3, gc.C_WHITE, gc.C_WHITE)
-		gc.InitPair(4, gc.C_WHITE, gc.C_CYAN)
-		gc.InitPair(5, gc.C_BLACK, gc.C_BLUE)
-		gc.InitPair(6, gc.C_WHITE, gc.C_GREEN)
-		gc.InitPair(7, gc.C_WHITE, gc.C_YELLOW)
-		gc.InitPair(8, gc.C_WHITE, gc.C_MAGENTA)
-		gc.InitPair(9, gc.C_WHITE, gc.C_RED)
-
+		gc.InitPair(4, gc.C_WHITE, gc.C_RED)
+		gc.InitPair(5, gc.C_BLACK, gc.C_MAGENTA)
+		gc.InitPair(6, gc.C_WHITE, gc.C_YELLOW)
+		gc.InitPair(7, gc.C_WHITE, gc.C_GREEN)
+		gc.InitPair(8, gc.C_WHITE, gc.C_BLUE)
+		gc.InitPair(9, gc.C_WHITE, gc.C_CYAN)
 	}
 }
 
