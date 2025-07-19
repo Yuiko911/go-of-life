@@ -30,9 +30,10 @@ func main() {
 	flag.BoolVar(&fs.Monochrome, "m", false, "Start in monochrome mode.")
 
 	flagSpeed := flag.Int64("i", 50, "Initial speed of the simulation.")
-	fs.CurrentSpeed = int(*flagSpeed)
 
 	flag.Parse() // This line *has* to be before gc.Init()
+
+	fs.CurrentSpeed = int(*flagSpeed)
 
 	scr, err := gc.Init()
 	if err != nil {
@@ -57,9 +58,8 @@ func main() {
 		field[i] = make([]int, wx)
 	}
 
-	GenerateRandomField(&field)
-
 	scr.Timeout(fs.CurrentSpeed)
+	GenerateRandomField(&field)
 
 	for {
 		DrawToScreen(scr, fs, field, 0, 0)
