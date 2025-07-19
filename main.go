@@ -1,6 +1,8 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"log"
 	"slices"
 
@@ -8,7 +10,11 @@ import (
 )
 
 type FieldStatus struct {
-	HasColors 			bool
+	Fullscreen 			bool
+	Unicode				bool
+	LightMode			bool
+	
+	ColorsToggled		bool
 	Paused				bool
 	CurrentSpeed 		int
 }
@@ -20,10 +26,51 @@ func main() {
 	}
 	defer gc.End()
 
+	fs := FieldStatus{
+		Fullscreen: false,
+		Unicode: false,
+		LightMode: false,
+		
+		ColorsToggled: true,
+		Paused: false,
+		CurrentSpeed: 50,
+	}
+
 	err = gc.StartColor()
 	if err != nil {
-		log.Fatal(err)
+		log.Print("Colors are not supported on this terminal")
+		fs.ColorsToggled = false
 	}
+
+	// args := os.Args[1:]
+
+	/*
+		-f --fullscreen 
+		-p --paused
+		-i --initial-speed=[speed]
+		
+		-u --unicode
+		
+		-m --monochrome
+		-L --light-mode
+		-D --dark-mode
+
+		-s --starting-state=[state]
+			0: random
+			1: checkered
+	*/
+
+	flag.BoolVar(&fs.Fullscreen, "f", false, "Start in fullscreen")
+
+	fmt.Printf("%v\n", fs.Fullscreen)
+	fmt.Printf("%v", fs.Unicode)
+	fmt.Printf("%v", fs.LightMode)
+	fmt.Printf("%v", fs.ColorsToggled)
+	fmt.Printf("%v", fs.Paused)
+	fmt.Printf("%v", fs.CurrentSpeed)
+
+
+	return
 
 	gc.Cursor(0)
 	gc.Echo(false)
@@ -50,20 +97,14 @@ func main() {
 
 	DrawBorderAroundField(scr, 3, 3, wy, wx)
 	
-	fs := FieldStatus{
-		HasColors: true,
-		Paused: false,
-		CurrentSpeed: 50,
-	}
-
 	scr.Timeout(fs.CurrentSpeed)
 	
-	for true {
+	for {
 		DrawMenu(scr, 3+wy+2, fs)
 		DrawToScreen(scr, field, 3, 3)
 		scr.Refresh()
 
-		if (fs.Paused == false) {
+		if (!fs.Paused) {
 			ComputeNextField(&field)
 		}
 
@@ -85,19 +126,22 @@ func main() {
 }
 
 func (fs *FieldStatus) ToggleColors() {
-	if fs.HasColors {
+	if fs.ColorsToggled {
 		SetColorsMonochrome()
 	} else {
 		SetColorsColor()
 	}
 
-	fs.HasColors = !fs.HasColors
+	fs.ColorsToggled = !fs.ColorsToggled
 }
 
 func (fs *FieldStatus) ChangeSpeed() {
 	speeds := []int{10, 25, 50, 100, 200, 500, 1000}
 
 	cs := slices.Index(speeds, fs.CurrentSpeed)
+	
+	// In case fs.CurrentSpeed is *somehow* not in the array,
+	// cs will be -1, which will put the speed at speeds[0].
 
 	if cs >= len(speeds)-1 {
 		fs.CurrentSpeed = speeds[0]
@@ -153,7 +197,7 @@ func DrawMenu(scr *gc.Window, y int, fs FieldStatus) {
 	meop := "                         %-7d     %-15s"
 	
 	var colorstatus string
-	if fs.HasColors {
+	if fs.ColorsToggled {
 		colorstatus = "colorful"
 	} else {
 		colorstatus = "monochrome"
