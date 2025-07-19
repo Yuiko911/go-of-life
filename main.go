@@ -1,8 +1,8 @@
 package main
 
 import (
+	// "fmt"
 	"flag"
-	"fmt"
 	"log"
 	"slices"
 
@@ -10,13 +10,13 @@ import (
 )
 
 type FieldStatus struct {
-	Fullscreen 			bool
-	Unicode				bool
-	LightMode			bool
-	
-	ColorsToggled		bool
-	Paused				bool
-	CurrentSpeed 		int
+	Fullscreen bool
+	Unicode    bool
+	LightMode  bool
+
+	ColorsToggled bool
+	Paused        bool
+	CurrentSpeed  int
 }
 
 func main() {
@@ -28,29 +28,21 @@ func main() {
 
 	fs := FieldStatus{
 		Fullscreen: false,
-		Unicode: false,
-		LightMode: false,
-		
+		Unicode:    false,
+		LightMode:  false,
+
 		ColorsToggled: true,
-		Paused: false,
-		CurrentSpeed: 50,
+		Paused:        false,
+		CurrentSpeed:  50,
 	}
-
-	err = gc.StartColor()
-	if err != nil {
-		log.Print("Colors are not supported on this terminal")
-		fs.ColorsToggled = false
-	}
-
-	// args := os.Args[1:]
 
 	/*
-		-f --fullscreen 
+		-f --fullscreen
 		-p --paused
 		-i --initial-speed=[speed]
-		
+
 		-u --unicode
-		
+
 		-m --monochrome
 		-L --light-mode
 		-D --dark-mode
@@ -60,22 +52,37 @@ func main() {
 			1: checkered
 	*/
 
-	flag.BoolVar(&fs.Fullscreen, "f", false, "Start in fullscreen")
+	flag.BoolVar(&fs.Fullscreen, "f", false, "Start in fullscreen.") // Replace with size / padding
+	flag.BoolVar(&fs.Paused, "p", false, "Start with the simulation paused.")
+	
+	flagSpeed := flag.Int64("i", 50, "Initial speed of the simulation.")
+	fs.CurrentSpeed = int(*flagSpeed)
+	
+	flag.BoolVar(&fs.ColorsToggled, "m", false, "Start in monochrome mode.")
+	flag.BoolVar(&fs.Unicode, "U", false, "Start in unicode mode (only use character). Force the -m flag.")
 
-	fmt.Printf("%v\n", fs.Fullscreen)
-	fmt.Printf("%v", fs.Unicode)
-	fmt.Printf("%v", fs.LightMode)
-	fmt.Printf("%v", fs.ColorsToggled)
-	fmt.Printf("%v", fs.Paused)
-	fmt.Printf("%v", fs.CurrentSpeed)
+	flag.Parse()
 
+	colorAvailable := true
 
-	return
+	err = gc.StartColor()
+	if err != nil {
+		log.Print("Colors are not supported on this terminal")
+		colorAvailable = false
+		fs.ColorsToggled = false
+	}
+
+	if fs.Unicode {
+		colorAvailable = false
+		fs.ColorsToggled = false
+	}
+
+	log.Print(colorAvailable)
 
 	gc.Cursor(0)
 	gc.Echo(false)
 	gc.Raw(true)
-	
+
 	gc.UseDefaultColors()
 	SetColorsColor()
 
@@ -86,7 +93,7 @@ func main() {
 
 	wy -= 10 // Magic numbers for padding
 	wx -= 6
-	var field[][] int = make([][]int, wy)
+	var field [][]int = make([][]int, wy)
 	for i := range field {
 		field[i] = make([]int, wx)
 	}
@@ -96,31 +103,31 @@ func main() {
 	// GenerateFlyerField(&field)
 
 	DrawBorderAroundField(scr, 3, 3, wy, wx)
-	
+
 	scr.Timeout(fs.CurrentSpeed)
-	
+
 	for {
 		DrawMenu(scr, 3+wy+2, fs)
 		DrawToScreen(scr, field, 3, 3)
 		scr.Refresh()
 
-		if (!fs.Paused) {
+		if !fs.Paused {
 			ComputeNextField(&field)
 		}
 
 		ch := scr.GetChar()
 		switch ch {
-			case 'q':
-				return
-			case 'r':
-				GenerateRandomField(&field)
-			case 's':
-				fs.ChangeSpeed()
-				scr.Timeout(fs.CurrentSpeed)
-			case 'c':
-				fs.ToggleColors()
-			case 'p':
-				fs.TogglePause()
+		case 'q':
+			return
+		case 'r':
+			GenerateRandomField(&field)
+		case 's':
+			fs.ChangeSpeed()
+			scr.Timeout(fs.CurrentSpeed)
+		case 'c':
+			fs.ToggleColors()
+		case 'p':
+			fs.TogglePause()
 		}
 	}
 }
@@ -139,7 +146,7 @@ func (fs *FieldStatus) ChangeSpeed() {
 	speeds := []int{10, 25, 50, 100, 200, 500, 1000}
 
 	cs := slices.Index(speeds, fs.CurrentSpeed)
-	
+
 	// In case fs.CurrentSpeed is *somehow* not in the array,
 	// cs will be -1, which will put the speed at speeds[0].
 
@@ -156,13 +163,13 @@ func (fs *FieldStatus) TogglePause() {
 }
 
 func DrawToScreen(scr *gc.Window, field [][]int, y int, x int) {
-	
+
 	var c int16 = 1
-	
+
 	for i := range field {
 		for j := range field[i] {
-			
-			if (field[i][j] <= 7) {
+
+			if field[i][j] <= 7 {
 				c = (int16)(field[i][j]) + 2
 			} else {
 				c = 9
@@ -183,7 +190,7 @@ func DrawBorderAroundField(scr *gc.Window, fy int, fx int, fsy int, fsx int) {
 		scr.MovePrint(fy-1+i, fx-1, " ")
 		scr.MovePrint(fy-1+i, fx+fsx, " ")
 	}
-	
+
 	for i := 0; i < fsx; i++ {
 		scr.MovePrint(fy-1, fx+i, " ")
 		scr.MovePrint(fy+fsy, fx+i, " ")
@@ -195,7 +202,7 @@ func DrawBorderAroundField(scr *gc.Window, fy int, fx int, fsy int, fsx int) {
 func DrawMenu(scr *gc.Window, y int, fs FieldStatus) {
 	menu := "(q)uit     (r)efresh     (s)peed     toggle (c)olors     (p)ause"
 	meop := "                         %-7d     %-15s"
-	
+
 	var colorstatus string
 	if fs.ColorsToggled {
 		colorstatus = "colorful"
@@ -212,13 +219,13 @@ func DrawMenu(scr *gc.Window, y int, fs FieldStatus) {
 func SetColorsColor() {
 	gc.InitPair(1, -1, -1)
 	gc.InitPair(2, gc.C_WHITE, gc.C_BLACK)
-	gc.InitPair(3, gc.C_WHITE, 	gc.C_WHITE)
-	gc.InitPair(4, gc.C_WHITE, 	gc.C_CYAN)
-	gc.InitPair(5, gc.C_BLACK,  gc.C_BLUE)
-	gc.InitPair(6, gc.C_WHITE, 	gc.C_GREEN)
-	gc.InitPair(7, gc.C_WHITE, 	gc.C_YELLOW)
-	gc.InitPair(8, gc.C_WHITE, 	gc.C_MAGENTA)
-	gc.InitPair(9, gc.C_WHITE, 	gc.C_RED)
+	gc.InitPair(3, gc.C_WHITE, gc.C_WHITE)
+	gc.InitPair(4, gc.C_WHITE, gc.C_CYAN)
+	gc.InitPair(5, gc.C_BLACK, gc.C_BLUE)
+	gc.InitPair(6, gc.C_WHITE, gc.C_GREEN)
+	gc.InitPair(7, gc.C_WHITE, gc.C_YELLOW)
+	gc.InitPair(8, gc.C_WHITE, gc.C_MAGENTA)
+	gc.InitPair(9, gc.C_WHITE, gc.C_RED)
 }
 
 func SetColorsMonochrome() {
