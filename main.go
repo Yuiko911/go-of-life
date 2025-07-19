@@ -13,9 +13,9 @@ type FieldStatus struct {
 	Unicode    bool
 	LightMode  bool
 
-	ColorsToggled bool
-	Paused        bool
-	CurrentSpeed  int
+	Monochrome   bool
+	Paused       bool
+	CurrentSpeed int
 }
 
 func main() {
@@ -34,28 +34,28 @@ func main() {
 			0: random
 			1: checkered
 	*/
-	
+
 	fs := FieldStatus{
 		Fullscreen: false,
 		Unicode:    false,
 		LightMode:  false,
 
-		ColorsToggled: true,
-		Paused:        false,
-		CurrentSpeed:  50,
+		Monochrome:   false,
+		Paused:       false,
+		CurrentSpeed: 50,
 	}
 
 	flag.BoolVar(&fs.Fullscreen, "f", false, "Start in fullscreen.") // Replace with size / padding
 	flag.BoolVar(&fs.Paused, "p", false, "Start with the simulation paused.")
-	
+
 	flagSpeed := flag.Int64("i", 50, "Initial speed of the simulation.")
 	fs.CurrentSpeed = int(*flagSpeed)
-	
-	flag.BoolVar(&fs.ColorsToggled, "m", false, "Start in monochrome mode.")
+
+	flag.BoolVar(&fs.Monochrome, "m", false, "Start in monochrome mode.")
 	flag.BoolVar(&fs.Unicode, "U", false, "Start in unicode mode (only use character). Force the -m flag.")
 
 	flag.Parse() // This line *has* to be before gc.Init()
-	
+
 	scr, err := gc.Init()
 	if err != nil {
 		log.Fatal(err)
@@ -64,26 +64,27 @@ func main() {
 
 	colorAvailable := true
 
-	err = gc.StartColor()
-	if err != nil {
+	if err = gc.StartColor(); err != nil {
 		log.Print("Colors are not supported on this terminal")
 		colorAvailable = false
-		fs.ColorsToggled = false
+		fs.Monochrome = true
 	}
 
 	if fs.Unicode {
 		colorAvailable = false
-		fs.ColorsToggled = false
+		fs.Monochrome = true
 	}
-
-	log.Print(colorAvailable)
-
+	
 	gc.Cursor(0)
 	gc.Echo(false)
 	gc.Raw(true)
+	
+	log.Print(fs.Monochrome)
 
-	gc.UseDefaultColors()
-	SetColorsColor()
+	if colorAvailable {
+		gc.UseDefaultColors()
+		SetColors(fs)
+	}
 
 	wy, wx := scr.MaxYX()
 	if wy < 20 || wx < 64 {
@@ -132,13 +133,8 @@ func main() {
 }
 
 func (fs *FieldStatus) ToggleColors() {
-	if fs.ColorsToggled {
-		SetColorsMonochrome()
-	} else {
-		SetColorsColor()
-	}
-
-	fs.ColorsToggled = !fs.ColorsToggled
+	fs.Monochrome = !fs.Monochrome
+	SetColors(*fs)
 }
 
 func (fs *FieldStatus) ChangeSpeed() {
@@ -203,10 +199,10 @@ func DrawMenu(scr *gc.Window, y int, fs FieldStatus) {
 	meop := "                         %-7d     %-15s"
 
 	var colorstatus string
-	if fs.ColorsToggled {
-		colorstatus = "colorful"
-	} else {
+	if fs.Monochrome {
 		colorstatus = "monochrome"
+	} else {
+		colorstatus = "colorful"
 	}
 
 	_, wx := scr.MaxYX()
@@ -215,23 +211,24 @@ func DrawMenu(scr *gc.Window, y int, fs FieldStatus) {
 	scr.MovePrintf(y+1, (wx/2)-(len(menu)/2), meop, fs.CurrentSpeed, colorstatus)
 }
 
-func SetColorsColor() {
-	gc.InitPair(1, -1, -1)
-	gc.InitPair(2, gc.C_WHITE, gc.C_BLACK)
-	gc.InitPair(3, gc.C_WHITE, gc.C_WHITE)
-	gc.InitPair(4, gc.C_WHITE, gc.C_CYAN)
-	gc.InitPair(5, gc.C_BLACK, gc.C_BLUE)
-	gc.InitPair(6, gc.C_WHITE, gc.C_GREEN)
-	gc.InitPair(7, gc.C_WHITE, gc.C_YELLOW)
-	gc.InitPair(8, gc.C_WHITE, gc.C_MAGENTA)
-	gc.InitPair(9, gc.C_WHITE, gc.C_RED)
-}
+func SetColors(fs FieldStatus) {
+	if fs.Monochrome {
+		gc.InitPair(1, -1, -1)
+		gc.InitPair(2, -1, -1)
+		var i int16
+		for i = 3; i < 10; i++ {
+			gc.InitPair(i, -1, gc.C_WHITE)
+		}
+	} else {
+		gc.InitPair(1, -1, -1)
+		gc.InitPair(2, gc.C_WHITE, gc.C_BLACK)
+		gc.InitPair(3, gc.C_WHITE, gc.C_WHITE)
+		gc.InitPair(4, gc.C_WHITE, gc.C_CYAN)
+		gc.InitPair(5, gc.C_BLACK, gc.C_BLUE)
+		gc.InitPair(6, gc.C_WHITE, gc.C_GREEN)
+		gc.InitPair(7, gc.C_WHITE, gc.C_YELLOW)
+		gc.InitPair(8, gc.C_WHITE, gc.C_MAGENTA)
+		gc.InitPair(9, gc.C_WHITE, gc.C_RED)
 
-func SetColorsMonochrome() {
-	gc.InitPair(1, -1, -1)
-	gc.InitPair(2, -1, -1)
-	var i int16
-	for i = 3; i < 10; i++ {
-		gc.InitPair(i, -1, gc.C_WHITE)
 	}
 }
