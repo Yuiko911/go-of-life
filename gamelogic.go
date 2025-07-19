@@ -12,14 +12,6 @@ func GenerateRandomField(field *[][]int) {
 	}
 }
 
-func GenerateCheckerboardField(field *[][]int) {
-	for i, row := range *field {
-		for j := range row {
-			(*field)[i][j] = (i+j)%2
-		}
-	}
-}
-
 func GenerateFlyerField(field *[][]int) {
 	(*field)[6][10] = 1
     (*field)[7][11] = 1
