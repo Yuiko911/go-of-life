@@ -87,12 +87,6 @@ func main() {
 	}
 
 	wy, wx := scr.MaxYX()
-	if wy < 20 || wx < 64 {
-		log.Fatal("Terminal is not big enough")
-	}
-
-	wy -= 10 // Magic numbers for padding
-	wx -= 6
 	var field [][]int = make([][]int, wy)
 	for i := range field {
 		field[i] = make([]int, wx)
@@ -102,13 +96,13 @@ func main() {
 	// GenerateCheckerboardField(&field)
 	// GenerateFlyerField(&field)
 
-	DrawBorderAroundField(scr, 3, 3, wy, wx)
+	// DrawBorderAroundField(scr, 3, 3, wy, wx)
 
 	scr.Timeout(fs.CurrentSpeed)
 
 	for {
-		DrawMenu(scr, 3+wy+2, fs)
-		DrawToScreen(scr, field, 3, 3)
+		// DrawMenu(scr, 3+wy+2, fs)
+		DrawToScreen(scr, field, 0, 0)
 		scr.Refresh()
 
 		if !fs.Paused {
