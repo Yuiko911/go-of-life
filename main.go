@@ -1,7 +1,6 @@
 package main
 
 import (
-	// "fmt"
 	"flag"
 	"log"
 	"slices"
@@ -20,22 +19,6 @@ type FieldStatus struct {
 }
 
 func main() {
-	scr, err := gc.Init()
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer gc.End()
-
-	fs := FieldStatus{
-		Fullscreen: false,
-		Unicode:    false,
-		LightMode:  false,
-
-		ColorsToggled: true,
-		Paused:        false,
-		CurrentSpeed:  50,
-	}
-
 	/*
 		-f --fullscreen
 		-p --paused
@@ -51,6 +34,16 @@ func main() {
 			0: random
 			1: checkered
 	*/
+	
+	fs := FieldStatus{
+		Fullscreen: false,
+		Unicode:    false,
+		LightMode:  false,
+
+		ColorsToggled: true,
+		Paused:        false,
+		CurrentSpeed:  50,
+	}
 
 	flag.BoolVar(&fs.Fullscreen, "f", false, "Start in fullscreen.") // Replace with size / padding
 	flag.BoolVar(&fs.Paused, "p", false, "Start with the simulation paused.")
@@ -61,7 +54,13 @@ func main() {
 	flag.BoolVar(&fs.ColorsToggled, "m", false, "Start in monochrome mode.")
 	flag.BoolVar(&fs.Unicode, "U", false, "Start in unicode mode (only use character). Force the -m flag.")
 
-	flag.Parse()
+	flag.Parse() // This line *has* to be before gc.Init()
+	
+	scr, err := gc.Init()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer gc.End()
 
 	colorAvailable := true
 
